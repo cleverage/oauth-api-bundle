@@ -1,0 +1,33 @@
+{
+    "name": "cleverage/oauth-api-bundle",
+    "description": "Ease the creation of business API client with OAuth authentication",
+    "keywords": [
+        "cleverage",
+        "api",
+        "oauth",
+        "serializer"
+    ],
+    "homepage": "https://github.com/cleverage/oauth-api-bundle",
+    "type": "symfony-bundle",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Vincent Chalnot",
+            "email": "vchalnot@clever-age.com",
+            "homepage": "http://chalnot.fr",
+            "role": "Lead Developer"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "CleverAge\\OAuthApiBundle\\": ""
+        }
+    },
+    "require": {
+        "php": ">=7.1",
+        "sidus/base-bundle": "~1.0",
+        "sidus/base-serializer-bundle": "~1.0",
+        "symfony/serializer": ">2.4,<5.0",
+        "guzzle/http": ">2.8,<4.0"
+    }
+}

@@ -1,0 +1,6 @@
+services:
+    CleverAge\OAuthApiBundle\Request\ParamConverter\ApiRequestParamConverter:
+        autowire: true
+        public: false
+        tags:
+            - { name: request.param_converter, converter: clever.api_request }
