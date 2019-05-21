@@ -1,0 +1,5 @@
+services:
+    CleverAge\OAuthApiBundle\Action\:
+        resource: '../../../Action/*'
+        autowire: true
+        public: true
