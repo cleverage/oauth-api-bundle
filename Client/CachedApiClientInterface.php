@@ -7,22 +7,16 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-
 namespace CleverAge\OAuthApiBundle\Client;
 
-use CleverAge\OAuthApiBundle\Request\ApiRequestInterface;
-
 /**
- * Base logic used to query a remote API
- *
- * @author Vincent Chalnot <vchalnot@clever-age.com>
+ * Allow to manage cache for API request
  */
-interface ApiClientInterface
+interface CachedApiClientInterface extends ApiClientInterface
 {
     /**
-     * @param ApiRequestInterface $request
-     *
-     * @return object
+     * @param array $tags
+     * @param bool  $private
      */
-    public function query(ApiRequestInterface $request);
+    public function invalidate(array $tags, bool $private = false): void;
 }
