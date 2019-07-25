@@ -126,13 +126,26 @@ class ApiClient implements ApiClientInterface
     protected function getResponseData(
         Request $request
     ): ?string {
+        $this->logger->debug(
+            "API Request:{$request->getMethod()} {$request->getUri()}",
+            [
+                'body' => $request->getBody(),
+            ]
+        );
         try {
             $response = $this->client->sendRequest($request);
         } catch (HttpException $e) {
             throw ApiRequestException::create($request->getUri(), $e);
         }
+        $body = (string) $response->getBody();
+        $this->logger->debug(
+            "API Response:{$request->getMethod()} {$request->getUri()}",
+            [
+                'body' => $body,
+            ]
+        );
 
-        return (string) $response->getBody();
+        return $body;
     }
 
     /**
