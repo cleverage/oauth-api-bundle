@@ -135,7 +135,7 @@ class ApiClient implements ApiClientInterface
         try {
             $response = $this->client->sendRequest($request);
         } catch (HttpException $e) {
-            throw ApiRequestException::create($request->getUri(), $e);
+            throw ApiRequestException::create((string) $request->getUri(), $e);
         }
         $body = (string) $response->getBody();
         $this->logger->debug(
