@@ -15,7 +15,6 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpFoundation\Session\Attribute\AttributeBagInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
@@ -25,17 +24,6 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  */
 class RedirectUrlSetterAction
 {
-    /** @var AttributeBagInterface */
-    protected $attributeBag;
-
-    /**
-     * @param AttributeBagInterface $attributeBag
-     */
-    public function __construct(AttributeBagInterface $attributeBag)
-    {
-        $this->attributeBag = $attributeBag;
-    }
-
     /**
      * @param Request $request
      *
@@ -47,7 +35,10 @@ class RedirectUrlSetterAction
         if (!$redirectUrl) {
             throw new NotFoundHttpException('Missing redirectUrl in query');
         }
-        $this->attributeBag->set(AuthenticationSuccessHandler::SESSION_KEY, $redirectUrl);
+        $session = $request->getSession();
+        if ($session) {
+            $session->set(AuthenticationSuccessHandler::SESSION_KEY, $redirectUrl);
+        }
 
         if ($request->isXmlHttpRequest()) {
             return new JsonResponse();
