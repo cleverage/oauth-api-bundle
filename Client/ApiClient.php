@@ -12,6 +12,7 @@ namespace CleverAge\OAuthApiBundle\Client;
 
 use CleverAge\OAuthApiBundle\Exception\ApiDeserializationException;
 use CleverAge\OAuthApiBundle\Exception\ApiRequestException;
+use CleverAge\OAuthApiBundle\Exception\RequestFailedException;
 use CleverAge\OAuthApiBundle\Request\ApiRequestInterface;
 use Http\Client\Exception as HttpException;
 use GuzzleHttp\Psr7\Request;
@@ -127,23 +128,32 @@ class ApiClient implements ApiClientInterface
         Request $request
     ): ?string {
         $this->logger->debug(
-            "API Request:{$request->getMethod()} {$request->getUri()}",
+            "API Request",
             [
-                'body' => $request->getBody(),
+                'method' => $request->getMethod(),
+                'uri' => $request->getUri(),
+                'body' => (string)$request->getBody(),
             ]
         );
         try {
             $response = $this->client->sendRequest($request);
         } catch (HttpException $e) {
-            throw ApiRequestException::create((string) $request->getUri(), $e);
+            throw ApiRequestException::create((string)$request->getUri(), $e);
         }
-        $body = (string) $response->getBody();
+        $body = (string)$response->getBody();
         $this->logger->debug(
-            "API Response:{$request->getMethod()} {$request->getUri()}",
+            "API Response",
             [
+                'method' => $request->getMethod(),
+                'uri' => $request->getUri(),
+                'status_code' => $response->getStatusCode(),
                 'body' => $body,
             ]
         );
+
+        if ($response->getStatusCode() >= 400) {
+            throw RequestFailedException::createFromResponse($response);
+        }
 
         return $body;
     }
