@@ -10,7 +10,6 @@
 
 namespace CleverAge\OAuthApiBundle\Token;
 
-use function array_key_exists;
 use CleverAge\OAuthApiBundle\Exception\OAuthAuthenticationException;
 
 /**

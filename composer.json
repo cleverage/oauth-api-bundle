@@ -28,6 +28,9 @@
         "sidus/base-bundle": "~1.0",
         "sidus/base-serializer-bundle": "~1.0",
         "symfony/serializer": ">2.4,<5.0",
-        "guzzle/http": ">2.8,<4.0"
+        "symfony/security": ">2.4,<5.0",
+        "php-http/httplug": "^1.0 || ^2.0",
+        "sensio/framework-extra-bundle": "^5.1",
+        "guzzlehttp/psr7": "^1.0"
     }
 }
