@@ -1,4 +1,5 @@
-<?php declare(strict_types=1);
+<?php
+declare(strict_types=1);
 /*
  * This file is part of the CleverAge/OAuthApiBundle package.
  *
@@ -128,21 +129,21 @@ class ApiClient implements ApiClientInterface
         Request $request
     ): ?string {
         $this->logger->debug(
-            "API Request",
+            "API Request: {$request->getMethod()} {$request->getUri()}",
             [
                 'method' => $request->getMethod(),
                 'uri' => $request->getUri(),
-                'body' => (string)$request->getBody(),
+                'body' => (string) $request->getBody(),
             ]
         );
         try {
             $response = $this->client->sendRequest($request);
         } catch (HttpException $e) {
-            throw ApiRequestException::create((string)$request->getUri(), $e);
+            throw ApiRequestException::create((string) $request->getUri(), $e);
         }
-        $body = (string)$response->getBody();
+        $body = (string) $response->getBody();
         $this->logger->debug(
-            "API Response",
+            "API Response: {$request->getMethod()} {$response->getStatusCode()} {$request->getUri()}",
             [
                 'method' => $request->getMethod(),
                 'uri' => $request->getUri(),
