@@ -71,11 +71,11 @@ class OAuthHttpClient implements OAuthTokenAwareHttpClientInterface
                 throw OAuthAuthenticationException::createFromTokenResponse($this->settings, $response);
             }
 
-            $response = json_decode($content, true);
+            $data = json_decode($content, true);
             if (JSON_ERROR_NONE !== json_last_error()) {
                 throw OAuthAuthenticationException::createFromTokenResponse($this->settings, $response);
             }
-            $this->token = OAuthToken::createFromResponse($response);
+            $this->token = OAuthToken::createFromResponse($data);
         }
 
         return $this->token;
