@@ -13,8 +13,8 @@
     "authors": [
         {
             "name": "Vincent Chalnot",
-            "email": "vchalnot@clever-age.com",
-            "homepage": "http://chalnot.fr",
+            "email": "vincent.chalnot@gmail.com",
+            "homepage": "https://sidus.fr",
             "role": "Lead Developer"
         }
     ],
@@ -24,13 +24,10 @@
         }
     },
     "require": {
-        "php": ">=7.1",
-        "sidus/base-bundle": "~1.0",
-        "sidus/base-serializer-bundle": "~1.0",
-        "symfony/serializer": ">2.4,<5.0",
-        "symfony/security": ">2.4,<5.0",
-        "php-http/httplug": "^1.0 || ^2.0",
-        "sensio/framework-extra-bundle": "^5.1",
-        "guzzlehttp/psr7": "^1.0"
+        "php": ">=8.0",
+        "symfony/serializer": ">5.3",
+        "symfony/http-client": ">5.3",
+        "psr/http-client": ">1.0",
+        "nyholm/psr7": ">1.4"
     }
 }

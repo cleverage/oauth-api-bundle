@@ -1,42 +1,28 @@
-<?php declare(strict_types=1);
+<?php
 /*
- * This file is part of the CleverAge/OAuthApiBundle package.
- *
- * Copyright (C) 2017-2019 Clever-Age
- *
- * For the full copyright and license information, please view the LICENSE
+ * This file is part of the CleverAge/OAuthApiBundle package. * Copyright (C) 2017-2021 Clever-Age * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+declare(strict_types=1);
 
 namespace CleverAge\OAuthApiBundle\Request;
 
 /**
- * {@inheritDoc}
+ * @see CachedApiRequestInterface
  */
 class CachedApiRequest extends ApiRequest implements CachedApiRequestInterface
 {
-    /** @var int */
-    protected $ttl = 0;
+    protected int $ttl = 0;
 
-    /** @var bool */
-    protected $private = false;
+    protected bool $private = false;
 
-    /** @var array */
-    protected $tags = [];
+    protected array $tags = [];
 
-    /**
-     * @return int
-     */
     public function getTtl(): int
     {
         return $this->ttl;
     }
 
-    /**
-     * @param int $ttl
-     *
-     * @return self
-     */
     public function setTtl(int $ttl): self
     {
         $this->ttl = $ttl;
@@ -44,19 +30,11 @@ class CachedApiRequest extends ApiRequest implements CachedApiRequestInterface
         return $this;
     }
 
-    /**
-     * @return bool
-     */
     public function isPrivate(): bool
     {
         return $this->private;
     }
 
-    /**
-     * @param bool $private
-     *
-     * @return self
-     */
     public function setPrivate(bool $private): self
     {
         $this->private = $private;
@@ -64,19 +42,11 @@ class CachedApiRequest extends ApiRequest implements CachedApiRequestInterface
         return $this;
     }
 
-    /**
-     * @return array
-     */
     public function getTags(): array
     {
         return $this->tags;
     }
 
-    /**
-     * @param array $tags
-     *
-     * @return CachedApiRequest
-     */
     public function setTags(array $tags): self
     {
         $this->tags = $tags;

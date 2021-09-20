@@ -1,35 +1,23 @@
-<?php declare(strict_types=1);
+<?php
 /*
- * This file is part of the CleverAge/OAuthApiBundle package.
- *
- * Copyright (C) 2017-2019 Clever-Age
- *
- * For the full copyright and license information, please view the LICENSE
+ * This file is part of the CleverAge/OAuthApiBundle package. * Copyright (C) 2017-2021 Clever-Age * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+declare(strict_types=1);
 
 namespace CleverAge\OAuthApiBundle\Exception;
 
-use CleverAge\OAuthApiBundle\Settings\OAuthSettings;
 use Psr\Http\Message\ResponseInterface;
 
 /**
  * Thrown when unable to authenticate against the OAuth server API
- *
- * @author Vincent Chalnot <vchalnot@clever-age.com>
  */
 class OAuthAuthenticationException extends \RuntimeException
 {
-    /**
-     * @param OAuthSettings     $authSettings
-     * @param ResponseInterface $response
-     *
-     * @return OAuthAuthenticationException
-     */
-    public static function createFromTokenResponse(OAuthSettings $authSettings, ResponseInterface $response): self
+    public static function createFromTokenResponse(ResponseInterface $response, string $tokenRequestPath): self
     {
-        $m = "Unable to get OAuth token from remote server '{$authSettings->getBaseUrl()}': ";
-        $m .= "{$response->getStatusCode()} {$response->getReasonPhrase()}";
+        $m = "Unable to get OAuth token from remote server '{$tokenRequestPath}': ";
+        $m .= "{$response->getStatusCode()} {$response->getReasonPhrase()}\n{$response->getBody()}";
 
         return new self($m);
     }

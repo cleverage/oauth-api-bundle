@@ -1,12 +1,9 @@
-<?php declare(strict_types=1);
+<?php
 /*
- * This file is part of the CleverAge/OAuthApiBundle package.
- *
- * Copyright (C) 2017-2019 Clever-Age
- *
- * For the full copyright and license information, please view the LICENSE
+ * This file is part of the CleverAge/OAuthApiBundle package. * Copyright (C) 2017-2021 Clever-Age * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+declare(strict_types=1);
 
 namespace CleverAge\OAuthApiBundle\Exception;
 
@@ -14,20 +11,15 @@ use Psr\Http\Message\ResponseInterface;
 
 class RequestFailedException extends \RuntimeException
 {
-    /** @var ResponseInterface */
-    protected $response;
-
-    public function __construct(ResponseInterface $response, $message = 'Request have failed')
-    {
+    public function __construct(
+        protected ResponseInterface $response,
+        $message = 'Request have failed',
+    ) {
         $message .= " (status code {$response->getStatusCode()})";
 
-        parent::__construct($message, 0, null);
-        $this->response = $response;
+        parent::__construct($message);
     }
 
-    /**
-     * @return ResponseInterface
-     */
     public function getResponse(): ResponseInterface
     {
         return $this->response;
@@ -35,12 +27,13 @@ class RequestFailedException extends \RuntimeException
 
     public static function createFromResponse(ResponseInterface $response): self
     {
-        if ($response->getStatusCode() >= 400 && $response->getStatusCode() < 500) {
+        $statusCode = $response->getStatusCode();
+        if ($statusCode >= 400 && $statusCode < 500) {
             return new ClientRequestFailedException($response);
-        } elseif ($response->getStatusCode() >= 500 && $response->getStatusCode() < 600) {
-            return new ServerRequestFailedException($response);
-        } else {
-            return new RequestFailedException($response);
         }
+        if ($statusCode >= 500 && $statusCode < 600) {
+            return new ServerRequestFailedException($response);
+        }
+        return new RequestFailedException($response);
     }
 }

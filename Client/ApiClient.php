@@ -1,13 +1,9 @@
 <?php
-declare(strict_types=1);
 /*
- * This file is part of the CleverAge/OAuthApiBundle package.
- *
- * Copyright (C) 2017-2019 Clever-Age
- *
- * For the full copyright and license information, please view the LICENSE
+ * This file is part of the CleverAge/OAuthApiBundle package. * Copyright (C) 2017-2021 Clever-Age * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+declare(strict_types=1);
 
 namespace CleverAge\OAuthApiBundle\Client;
 
@@ -15,53 +11,28 @@ use CleverAge\OAuthApiBundle\Exception\ApiDeserializationException;
 use CleverAge\OAuthApiBundle\Exception\ApiRequestException;
 use CleverAge\OAuthApiBundle\Exception\RequestFailedException;
 use CleverAge\OAuthApiBundle\Request\ApiRequestInterface;
-use Http\Client\Exception as HttpException;
-use GuzzleHttp\Psr7\Request;
-use Http\Client\HttpClient;
+use Nyholm\Psr7\Stream;
+use Psr\Http\Client\ClientInterface;
+use Psr\Http\Client\RequestExceptionInterface;
+use Psr\Http\Message\RequestFactoryInterface;
+use Psr\Http\Message\RequestInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Serializer\SerializerInterface;
 
 /**
- * {@inheritDoc}
- *
- * @author Vincent Chalnot <vchalnot@clever-age.com>
+ * @see ApiClientInterface
  */
 class ApiClient implements ApiClientInterface
 {
-    /** @var HttpClient */
-    protected $client;
-
-    /** @var SerializerInterface */
-    protected $serializer;
-
-    /** @var string */
-    protected $baseUrl;
-
-    /** @var LoggerInterface */
-    protected $logger;
-
-    /**
-     * @param HttpClient          $client
-     * @param SerializerInterface $serializer
-     * @param LoggerInterface     $logger
-     * @param string              $baseUrl
-     */
     public function __construct(
-        HttpClient $client,
-        SerializerInterface $serializer,
-        LoggerInterface $logger,
-        string $baseUrl
+        protected ClientInterface $client,
+        protected RequestFactoryInterface $requestFactory,
+        protected SerializerInterface $serializer,
+        protected LoggerInterface $logger,
     ) {
-        $this->client = $client;
-        $this->serializer = $serializer;
-        $this->logger = $logger;
-        $this->baseUrl = $baseUrl;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function query(ApiRequestInterface $apiRequest)
+    public function query(ApiRequestInterface $apiRequest): object
     {
         $request = $this->getRequest($apiRequest);
         $normalizedData = $this->getResponseData($request);
@@ -69,13 +40,7 @@ class ApiClient implements ApiClientInterface
         return $this->deserialize($apiRequest, $normalizedData);
     }
 
-    /**
-     * @param ApiRequestInterface $apiRequest
-     * @param string|null         $normalizedData
-     *
-     * @return object
-     */
-    protected function deserialize(ApiRequestInterface $apiRequest, ?string $normalizedData)
+    protected function deserialize(ApiRequestInterface $apiRequest, ?string $normalizedData): object
     {
         try {
             return $this->serializer->deserialize(
@@ -94,39 +59,26 @@ class ApiClient implements ApiClientInterface
         }
     }
 
-    /**
-     * @param ApiRequestInterface $apiRequest
-     *
-     * @return Request
-     */
-    protected function getRequest(ApiRequestInterface $apiRequest): Request
+    protected function getRequest(ApiRequestInterface $apiRequest): RequestInterface
     {
-        $serializedContent = null;
-        if ($apiRequest->getContent()) {
-            $serializedContent = $this->serializer->serialize(
-                $apiRequest->getContent(),
-                'json',
-                $apiRequest->getSerializationContext()
-            );
+        $request = $this->requestFactory->createRequest($apiRequest->getMethod(), $apiRequest->getPath())
+            ->withHeader('Content-Type', 'application/json');
+
+        if (null === $apiRequest->getContent()) {
+            return $request;
         }
 
-        return new Request(
-            $apiRequest->getMethod(),
-            $this->baseUrl.$apiRequest->getPath(),
-            [
-                'Content-Type' => 'application/json',
-            ],
-            $serializedContent
+        $serializedContent = $this->serializer->serialize(
+            $apiRequest->getContent(),
+            'json',
+            $apiRequest->getSerializationContext()
         );
+
+        return $request->withBody(Stream::create($serializedContent));
     }
 
-    /**
-     * @param Request $request
-     *
-     * @return string|null
-     */
     protected function getResponseData(
-        Request $request
+        RequestInterface $request
     ): ?string {
         $this->logger->debug(
             "API Request: {$request->getMethod()} {$request->getUri()}",
@@ -138,7 +90,7 @@ class ApiClient implements ApiClientInterface
         );
         try {
             $response = $this->client->sendRequest($request);
-        } catch (HttpException $e) {
+        } catch (RequestExceptionInterface $e) {
             throw ApiRequestException::create((string) $request->getUri(), $e);
         }
         $body = (string) $response->getBody();
@@ -159,21 +111,12 @@ class ApiClient implements ApiClientInterface
         return $body;
     }
 
-    /**
-     * @param \Exception  $exception
-     * @param string|null $normalizedData
-     * @param string      $className
-     * @param array       $deserializationContext
-     *
-     * @return ApiDeserializationException
-     */
     protected function handleError(
         \Exception $exception,
         string $normalizedData,
         string $className,
         array $deserializationContext
     ): ApiDeserializationException {
-        $errorObject = null;
         $errorClass = $deserializationContext['error_class'] ?? null;
         if ($errorClass) {
             try {
@@ -183,11 +126,11 @@ class ApiClient implements ApiClientInterface
                     'json',
                     $deserializationContext
                 );
-            } /** @noinspection BadExceptionsProcessingInspection */ catch (\Exception $e) {
-                $errorObject = \json_decode($normalizedData, true);
+            } catch (\Exception) {
+                $errorObject = \json_decode($normalizedData, true, 512, JSON_THROW_ON_ERROR);
             }
         } else {
-            $errorObject = \json_decode($normalizedData, true);
+            $errorObject = \json_decode($normalizedData, true, 512, JSON_THROW_ON_ERROR);
         }
 
         return ApiDeserializationException::create($exception, $normalizedData, $className, $errorObject);
