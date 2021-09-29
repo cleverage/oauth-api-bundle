@@ -18,9 +18,17 @@ interface ApiRequestInterface
 
     public function getClassName(): string;
 
-    public function getContent();
+    public function getContent(): mixed;
+
+    public function getContentType(): string;
+
+    public function getHeaders(): array;
+
+    public function getSerializationFormat(): string;
 
     public function getSerializationContext(): array;
+
+    public function getDeserializationFormat(): string;
 
     public function getDeserializationContext(): array;
 }

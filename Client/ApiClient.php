@@ -46,15 +46,14 @@ class ApiClient implements ApiClientInterface
             return $this->serializer->deserialize(
                 $normalizedData,
                 $apiRequest->getClassName(),
-                'json',
+                $apiRequest->getDeserializationFormat(),
                 $apiRequest->getDeserializationContext()
             );
         } catch (\Exception $e) {
             throw $this->handleError(
                 $e,
+                $apiRequest,
                 $normalizedData,
-                $apiRequest->getClassName(),
-                $apiRequest->getDeserializationContext()
             );
         }
     }
@@ -62,7 +61,11 @@ class ApiClient implements ApiClientInterface
     protected function getRequest(ApiRequestInterface $apiRequest): RequestInterface
     {
         $request = $this->requestFactory->createRequest($apiRequest->getMethod(), $apiRequest->getPath())
-            ->withHeader('Content-Type', 'application/json');
+            ->withHeader('Content-Type', $apiRequest->getContentType());
+
+        foreach ($apiRequest->getHeaders() as $header => $value) {
+            $request = $request->withHeader($header, $value);
+        }
 
         if (null === $apiRequest->getContent()) {
             return $request;
@@ -70,7 +73,7 @@ class ApiClient implements ApiClientInterface
 
         $serializedContent = $this->serializer->serialize(
             $apiRequest->getContent(),
-            'json',
+            $apiRequest->getSerializationFormat(),
             $apiRequest->getSerializationContext()
         );
 
@@ -113,9 +116,8 @@ class ApiClient implements ApiClientInterface
 
     protected function handleError(
         \Exception $exception,
+        ApiRequestInterface $apiRequest,
         string $normalizedData,
-        string $className,
-        array $deserializationContext
     ): ApiDeserializationException {
         $errorClass = $deserializationContext['error_class'] ?? null;
         if ($errorClass) {
@@ -123,8 +125,8 @@ class ApiClient implements ApiClientInterface
                 $errorObject = $this->serializer->deserialize(
                     $normalizedData,
                     $errorClass,
-                    'json',
-                    $deserializationContext
+                    $apiRequest->getDeserializationFormat(),
+                    $apiRequest->getDeserializationContext(),
                 );
             } catch (\Exception) {
                 $errorObject = \json_decode($normalizedData, true, 512, JSON_THROW_ON_ERROR);
@@ -133,6 +135,11 @@ class ApiClient implements ApiClientInterface
             $errorObject = \json_decode($normalizedData, true, 512, JSON_THROW_ON_ERROR);
         }
 
-        return ApiDeserializationException::create($exception, $normalizedData, $className, $errorObject);
+        return ApiDeserializationException::create(
+            $exception,
+            $normalizedData,
+            $apiRequest->getClassName(),
+            $errorObject
+        );
     }
 }
