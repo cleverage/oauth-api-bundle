@@ -14,7 +14,7 @@ class ApiRequest implements ApiRequestInterface
 {
     protected string $method = 'GET';
 
-    protected mixed $content;
+    protected mixed $content = null;
 
     protected string $contentType = 'application/json';
 
