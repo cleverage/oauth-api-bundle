@@ -28,6 +28,7 @@ class OAuthRequestFactory implements OAuthTokenAwareRequestFactoryInterface
         protected string $baseUrl,
         protected string $tokenRequestPath,
         protected array $authenticationParams,
+        protected string $tokenRequestContentType = 'application/json',
     ) {
     }
 
@@ -74,8 +75,19 @@ class OAuthRequestFactory implements OAuthTokenAwareRequestFactoryInterface
 
     protected function createTokenRequest(): RequestInterface
     {
-        return $this->requestFactory->createRequest('POST', $this->baseUrl.$this->tokenRequestPath)
-            ->withHeader('Content-Type', 'application/x-www-form-urlencoded')
-            ->withBody(Stream::create(http_build_query($this->authenticationParams)));
+        $tokenRequest = $this->requestFactory->createRequest('POST', $this->baseUrl.$this->tokenRequestPath)
+            ->withHeader('Content-Type', $this->tokenRequestContentType);
+
+        if ('application/x-www-form-urlencoded' === $this->tokenRequestContentType) {
+            $content = http_build_query($this->authenticationParams);
+        } elseif ('application/json' === $this->tokenRequestContentType) {
+            $content = json_encode($this->authenticationParams, JSON_THROW_ON_ERROR);
+        } else {
+            throw new \UnexpectedValueException(
+                "Unsupported token request content type {$this->tokenRequestContentType}"
+            );
+        }
+
+        return $tokenRequest->withBody(Stream::create($content));
     }
 }
