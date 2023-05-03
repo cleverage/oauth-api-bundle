@@ -80,13 +80,11 @@ class CachedApiClient extends ApiClient implements CachedApiClientInterface
     {
         $subCacheKey = $request->getMethod().$request->getUri().$request->getBody();
         if ($private) {
-            $client = $this->client;
-            if (!$client instanceof OAuthTokenAwareRequestFactoryInterface) {
+            if (!$this->requestFactory instanceof OAuthTokenAwareRequestFactoryInterface) {
                 throw new \UnexpectedValueException('Unable to store private API cache, no private token available');
             }
-
             // Append authorization token to cache key if private
-            $subCacheKey .= $client->getToken()->getAuthorization();
+            $subCacheKey .= $this->requestFactory->getToken()->getAuthorization();
         }
 
         return sha1($subCacheKey);
@@ -97,12 +95,12 @@ class CachedApiClient extends ApiClient implements CachedApiClientInterface
         if (!$private) {
             return $tags;
         }
-        if (!$this->client instanceof OAuthTokenAwareRequestFactoryInterface) {
+        if (!$this->requestFactory instanceof OAuthTokenAwareRequestFactoryInterface) {
             throw new \UnexpectedValueException('Unable to store private API cache, no private token available');
         }
 
         // Append authorization token to cache key if private
-        $subCacheKey = $this->client->getToken()->getAuthorization();
+        $subCacheKey = $this->requestFactory->getToken()->getAuthorization();
         $privateTags = [];
         foreach ($tags as $tag) {
             $privateTags[] = $tag.'_'.$subCacheKey;
