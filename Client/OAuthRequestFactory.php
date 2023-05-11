@@ -55,6 +55,9 @@ class OAuthRequestFactory implements OAuthTokenAwareRequestFactoryInterface
     protected function updateToken(RequestInterface $request, callable $method): OAuthTokenInterface
     {
         $response = $this->client->sendRequest($request);
+        if (200 !== $response->getStatusCode()) {
+            throw OAuthAuthenticationException::createFromTokenResponse($response, $this->tokenRequestPath);
+        }
 
         $content = (string) $response->getBody();
         if (!$content) {

@@ -12,13 +12,13 @@ use Psr\Http\Message\ResponseInterface;
 /**
  * Thrown when unable to authenticate against the OAuth server API
  */
-class OAuthAuthenticationException extends \RuntimeException
+class OAuthAuthenticationException extends RequestFailedException
 {
     public static function createFromTokenResponse(ResponseInterface $response, string $tokenRequestPath): self
     {
         $m = "Unable to get OAuth token from remote server '{$tokenRequestPath}': ";
-        $m .= "{$response->getStatusCode()} {$response->getReasonPhrase()}\n{$response->getBody()}";
+        $m .= " {$response->getReasonPhrase()}\n";
 
-        return new self($m);
+        return new self($response, $m);
     }
 }
