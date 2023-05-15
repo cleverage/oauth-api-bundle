@@ -1,6 +1,8 @@
 <?php
 /*
- * This file is part of the CleverAge/OAuthApiBundle package. * Copyright (C) 2017-2021 Clever-Age * For the full copyright and license information, please view the LICENSE
+ * This file is part of the CleverAge/OAuthApiBundle package.
+ * Copyright (C) 2017-2023 Clever-Age
+ * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
 declare(strict_types=1);
@@ -8,15 +10,15 @@ declare(strict_types=1);
 namespace CleverAge\OAuthApiBundle\Client;
 
 use CleverAge\OAuthApiBundle\Exception\OAuthAuthenticationException;
-use CleverAge\OAuthApiBundle\Token\OAuthToken;
+use CleverAge\OAuthApiBundle\Token\OAuthTokenFactoryInterface;
 use CleverAge\OAuthApiBundle\Token\OAuthTokenInterface;
-use Nyholm\Psr7\Stream;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestFactoryInterface;
 use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\StreamFactoryInterface;
 
 /**
- * Handles authentication token negotiation to simplify request creation
+ * Handles authentication token negotiation to simplify request creation.
  */
 class OAuthRequestFactory implements OAuthTokenAwareRequestFactoryInterface
 {
@@ -25,9 +27,12 @@ class OAuthRequestFactory implements OAuthTokenAwareRequestFactoryInterface
     public function __construct(
         protected ClientInterface $client,
         protected RequestFactoryInterface $requestFactory,
+        protected StreamFactoryInterface $streamFactory,
+        protected OAuthTokenFactoryInterface $tokenFactory,
         protected string $baseUrl,
         protected string $tokenRequestPath,
         protected array $authenticationParams,
+        protected string $tokenRequestContentType = 'application/json',
     ) {
     }
 
@@ -40,20 +45,18 @@ class OAuthRequestFactory implements OAuthTokenAwareRequestFactoryInterface
     public function getToken(): OAuthTokenInterface
     {
         if (!$this->token) {
-            $this->token = $this->updateToken(
-                $this->createTokenRequest(),
-                static function (array $data) {
-                    return OAuthToken::createFromResponse($data);
-                }
-            );
+            $this->token = $this->updateToken($this->createTokenRequest());
         }
 
         return $this->token;
     }
 
-    protected function updateToken(RequestInterface $request, callable $method): OAuthTokenInterface
+    protected function updateToken(RequestInterface $request): OAuthTokenInterface
     {
         $response = $this->client->sendRequest($request);
+        if (200 !== $response->getStatusCode()) {
+            throw OAuthAuthenticationException::createFromTokenResponse($response, $this->tokenRequestPath);
+        }
 
         $content = (string) $response->getBody();
         if (!$content) {
@@ -66,7 +69,7 @@ class OAuthRequestFactory implements OAuthTokenAwareRequestFactoryInterface
         }
 
         try {
-            return $method($data);
+            return $this->tokenFactory->createToken($data);
         } catch (\Exception) {
             throw OAuthAuthenticationException::createFromTokenResponse($response, $this->tokenRequestPath);
         }
@@ -74,8 +77,18 @@ class OAuthRequestFactory implements OAuthTokenAwareRequestFactoryInterface
 
     protected function createTokenRequest(): RequestInterface
     {
-        return $this->requestFactory->createRequest('POST', $this->baseUrl.$this->tokenRequestPath)
-            ->withHeader('Content-Type', 'application/x-www-form-urlencoded')
-            ->withBody(Stream::create(http_build_query($this->authenticationParams)));
+        $tokenRequest = $this->requestFactory->createRequest('POST', $this->baseUrl.$this->tokenRequestPath)
+            ->withHeader('Content-Type', $this->tokenRequestContentType);
+
+        if ('application/x-www-form-urlencoded' === $this->tokenRequestContentType) {
+            $content = http_build_query($this->authenticationParams);
+        } elseif ('application/json' === $this->tokenRequestContentType) {
+            $content = json_encode($this->authenticationParams, JSON_THROW_ON_ERROR);
+        } else {
+            $m = "Unsupported token request content type {$this->tokenRequestContentType}";
+            throw new \UnexpectedValueException($m);
+        }
+
+        return $tokenRequest->withBody($this->streamFactory->createStream($content));
     }
 }

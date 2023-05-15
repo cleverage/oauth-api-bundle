@@ -1,6 +1,8 @@
 <?php
 /*
- * This file is part of the CleverAge/OAuthApiBundle package. * Copyright (C) 2017-2021 Clever-Age * For the full copyright and license information, please view the LICENSE
+ * This file is part of the CleverAge/OAuthApiBundle package.
+ * Copyright (C) 2017-2023 Clever-Age
+ * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
 declare(strict_types=1);
@@ -12,19 +14,21 @@ use CleverAge\OAuthApiBundle\Request\CachedApiRequestInterface;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestFactoryInterface;
 use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\StreamFactoryInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Contracts\Cache\ItemInterface;
 use Symfony\Contracts\Cache\TagAwareCacheInterface;
 
 /**
- * Api client improved with caching capabilities
+ * Api client improved with caching capabilities.
  */
 class CachedApiClient extends ApiClient implements CachedApiClientInterface
 {
     public function __construct(
         ClientInterface $client,
         RequestFactoryInterface $requestFactory,
+        StreamFactoryInterface $streamFactory,
         SerializerInterface $serializer,
         LoggerInterface $logger,
         protected TagAwareCacheInterface $cache,
@@ -32,6 +36,7 @@ class CachedApiClient extends ApiClient implements CachedApiClientInterface
         parent::__construct(
             client: $client,
             requestFactory: $requestFactory,
+            streamFactory: $streamFactory,
             serializer: $serializer,
             logger: $logger,
         );
@@ -80,13 +85,11 @@ class CachedApiClient extends ApiClient implements CachedApiClientInterface
     {
         $subCacheKey = $request->getMethod().$request->getUri().$request->getBody();
         if ($private) {
-            $client = $this->client;
-            if (!$client instanceof OAuthTokenAwareRequestFactoryInterface) {
+            if (!$this->requestFactory instanceof OAuthTokenAwareRequestFactoryInterface) {
                 throw new \UnexpectedValueException('Unable to store private API cache, no private token available');
             }
-
             // Append authorization token to cache key if private
-            $subCacheKey .= $client->getToken()->getAuthorization();
+            $subCacheKey .= $this->requestFactory->getToken()->getAuthorization();
         }
 
         return sha1($subCacheKey);
@@ -97,12 +100,12 @@ class CachedApiClient extends ApiClient implements CachedApiClientInterface
         if (!$private) {
             return $tags;
         }
-        if (!$this->client instanceof OAuthTokenAwareRequestFactoryInterface) {
+        if (!$this->requestFactory instanceof OAuthTokenAwareRequestFactoryInterface) {
             throw new \UnexpectedValueException('Unable to store private API cache, no private token available');
         }
 
         // Append authorization token to cache key if private
-        $subCacheKey = $this->client->getToken()->getAuthorization();
+        $subCacheKey = $this->requestFactory->getToken()->getAuthorization();
         $privateTags = [];
         foreach ($tags as $tag) {
             $privateTags[] = $tag.'_'.$subCacheKey;
