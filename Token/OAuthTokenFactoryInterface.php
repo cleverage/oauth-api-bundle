@@ -7,10 +7,9 @@
  */
 declare(strict_types=1);
 
-namespace CleverAge\OAuthApiBundle;
+namespace CleverAge\OAuthApiBundle\Token;
 
-use Symfony\Component\HttpKernel\Bundle\Bundle;
-
-class CleverAgeOAuthApiBundle extends Bundle
+interface OAuthTokenFactoryInterface
 {
+    public function createToken(array $data): OAuthTokenInterface;
 }

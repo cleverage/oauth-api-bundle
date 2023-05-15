@@ -1,6 +1,8 @@
 <?php
 /*
- * This file is part of the CleverAge/OAuthApiBundle package. * Copyright (C) 2017-2021 Clever-Age * For the full copyright and license information, please view the LICENSE
+ * This file is part of the CleverAge/OAuthApiBundle package.
+ * Copyright (C) 2017-2023 Clever-Age
+ * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
 declare(strict_types=1);
@@ -11,11 +13,11 @@ use CleverAge\OAuthApiBundle\Exception\ApiDeserializationException;
 use CleverAge\OAuthApiBundle\Exception\ApiRequestException;
 use CleverAge\OAuthApiBundle\Exception\RequestFailedException;
 use CleverAge\OAuthApiBundle\Request\ApiRequestInterface;
-use Nyholm\Psr7\Stream;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Client\RequestExceptionInterface;
 use Psr\Http\Message\RequestFactoryInterface;
 use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\StreamFactoryInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Serializer\SerializerInterface;
 
@@ -27,6 +29,7 @@ class ApiClient implements ApiClientInterface
     public function __construct(
         protected ClientInterface $client,
         protected RequestFactoryInterface $requestFactory,
+        protected StreamFactoryInterface $streamFactory,
         protected SerializerInterface $serializer,
         protected LoggerInterface $logger,
     ) {
@@ -77,7 +80,7 @@ class ApiClient implements ApiClientInterface
             $apiRequest->getSerializationContext()
         );
 
-        return $request->withBody(Stream::create($serializedContent));
+        return $request->withBody($this->streamFactory->createStream($serializedContent));
     }
 
     protected function getResponseData(
